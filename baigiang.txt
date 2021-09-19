@@ -1,0 +1,214 @@
+I. Tìm hiểu SPA và SSR
+1. SPA : Signal Page Application 
+- Thông tin được render một lần duy nhất trên một trang duy nhất
+- Hiệu quả trải nghiệm người dùng cao hơn 
+- Có sự phân chia công việc rõ ràng giữa FE và BE
+- Hạn chế truy vấn đến Serve
+-> + Tăng trải nghiệm người dùng
++ Giảm thiểu thời gian phát triển và chi phí hạ tầng
+Vd: Gmail, GG map, Facebook, Twitter, Google Driver, ....
+* Nhược điểm: 
+- Không có ích cho SEO 
+- Buộc phải kích hoạt JS 
+2. SSR 
+- Khi người dùng vào một trang web, request sẽ được gửi đến máy chủ và sau 
+đó database sẽ render html và trả về cho browser;
+- Người dùng nếu muốn yêu cầu chức năng khác thì trang web sẽ reload
+* Ưu điểm :
+- Initial load nhanh, dễ tối ưu vì toàn bộ dữ liệu được xử lý sẵn ở Serve
+- Không cần tách FE và BE 
+- SEO tốt vì bot GG có thể đọc được html 
+- Có thể không dùng đến JS 
+---> Nhược điểm : 
++ Site sẽ reaload lại nhiều lần
++ Nặng cho xử lý ở serve 
++ Tốn băng thông vì serve gửi dữ liệu thừa thái 
++ Tương tác không tốt
+II.. Code NuxtJS ( Serve Site Rendering)
+1. Nuxtjs là gì ? 
+- Nuxt.js là một framework js để tạo các ứng dụng Universal Vue.js
+- Có rất nhiều tính năng giúp bạn phát triển giữa phía client và server như Dữ liệu bất đồng bộ (Asynchronous Data), Middleware, Layouts, v.v.
+2. Cách khởi tạo 
+- Yarn : yarn create nuxt-app <project-name>
+- npm : npm init nuxt-app <project-name>
+
+3. Cấu trúc thư mục của Nuxtjs
+a. Assets
+- un-compiled 
+- Sử dụng webpack để sử lý và complied. 
+- Những thư mục con có thể được dùng 
++ css 
++ fonts 
++ img
++ scss (base, bootstrap-vue)
+Ex : <img src="/image.jpg"/> 
+b. Components
+- Phân chia các trang theo những thuộc tính tương tự nhau 
+- Vd : common ( Auth, Plugins) hoặc uncommon( About, Home)
+- Code : 
+import Auth from "~/components/Auth";
+
+export default {
+    components: { 
+    	Auth
+    },
+}
+c. Layouts
+- Được dùng để thay đổi giao diện ứng dụng 
+- Chia ứng dụng thành nhiều layout 
+- Vd : Defaul , Secret , Login, Register , ...
+- Muốn sử dụng một layouts thì khai báo tại pages 
+Code : 
+<template>
+  <!-- Your template -->
+</template>
+
+<script>
+export default {
+  layout: 'Login'
+  // page component definitions
+}
+</script>
+d. Middleware
+- Chứa các hàm js tùy chỉnh chạy ngay truowxc khi một trang được hiển thị 
+- Tạo code js : Vd kiểm tra dữ liệu của một user 
+ Tạo ra file middleware/auth.js để kiểm tra dữ liệu 
+export default function({ store }) {
+  // some code to check user authentication
+}
+- Sau khi code xong một chức năng, phải khai báo cho Nuxjs biết mình áp dụng nó ở đâu
++ Cách 1 : Global middleware - (Thông qua file cấu hình Nuxt và ảnh hưởng đến tất cả các route)
+// nuxt.config.js 
+export default {
+  router: {
+    middleware: 'auth'
+  }
+}
++ Cách 2 : Layout middleware (Thông qua layouts và ảnh hưởng đến nhóm các route tương ứng, tức là các trang sử dụng layouts đó chỉ được xem và truy cập bởi người dùng đã xác thực)
+// layouts/default.vue
+export default { 
+  middleware: 'authenticated-basic-plan-user' 
+}
++ Cách 3 : Page middleware (Thông qua từng page và ảnh hưởng trên route gọi đến page đó)
+// pages/index.vue
+export default { 
+  middleware: 'subscribed'
+}
+e. Pages
+- Thư mục quan trọng nhất của Nuxtjs 
+- Tự động tạo các route bất kỳ theo từng file trong .vue 
+- Chứa các views và routers cho ứng dụng 
+- Mô tả những gì cần để cấu hình dữ liệu và view cho một router cụ thể 
+- Tất cả file.vue trong thư mục đều được cung câp asyncData, layout, middleware, auth, fetch, head, validate, scrollToTop cấu hình
+- File pages/index.vue đóng vai trò quan trọng là trang chủ của ứng dụng 
+- Tạo url thân thiện với SEO 
+- Thư mục con có thể : 
++ users 
++ users _id.vue 
++ blogs 
++ articels 
+f. Plugins  
+- Đăng ký global các thư viện các ứng dụng mình sẽ dùng trong code dự án 
+- Sau khi cài đặt thư viện thì mình sẽ import trực tiếp 
+- Code :
+export default {
+  plugins: ['~/plugins/vue-notifications']
+}
+Vue.use(VueNotifications)
+g. Static
+- Đựng những nội dung không thay đổi 
+- Webpack bỏ qua thư mục và không xử lý bất kì thứ gì 
+- Trong code của mình thì có thể tham chiếu các file từ root 
+Ex : <img src="~/assets/image.jpg"/>
+h. Store
+- Tạo kho dữ liệu, xác định hành động nuxtServerInit
+- Khi người dùng truy cập lần đầu, fill/update dữ liệu vào store. 
+- Cho phép sử dụng  modules, state, getters, mutations and actions
+- Có thể chứa nhiều store bằng cách tạo thêm thư mục và config 
+4. Life hook của Nuxtjs 
+Bước 1 : nuxtServerInit 
+- Là một action 
+- Được gọi ngay khi Nuxjs bắt đầu lifecycle 
+- Dùng chung cho tất cả các pages từ server vào store của client 
+- Nếu action trả về Promise thì nuxtjs sẽ chờ promise này giải quyết xong mới 
+tiếp tục thực hiện phương thức tiếp theoo
+- Code : 
+// store/index.js
+actions: {
+  nuxtServerInit({ commit }, { req }) {
+    if (req.session.user) {
+      commit('setUser', req.session.user);
+      return axios.get(`/users/${req.session.user}`).then((response) =>{
+        commit('currentUserData', response.data);
+      });
+    }
+  },
+}
+Bước 2 : middleware
+- Khai báo và thực hiện các hàm trước khi khởi tạo page 
+- Có thể sử dụng global middleware trong nuxt.config.js cho tất cả pages hoặc pages cụ thể 
+bằng phương thức middleware trong layout/page đó 
+- Có thể tái sử dụng được code nên là nơi tốt để kiểm tra đăng nhập hoặc lấy dữ liệu chung cho pages 
+- Quy ước thứ tự ưu tiên thực thi middleware 
++ nuxt.config.js
++ Layouts có middleware
++ Pages có middleware
+- Code: 
+// middleware/check-authenticate.js
+export default function({ store, redirect }) {
+  // Chưa đăng nhập thì đuổi về trang login 😛😛
+  if (!store.state.authenticated) {
+    return redirect('/login');
+  }
+}
+// middleware/common-fetch.js
+import axios from 'axios'
+
+export default function ({ route }) { // 👈 Tham số đầu tiên là context nè
+  return axios.post('http://api-cua-tui.com', {
+    url: route.fullPath
+  });
+}
+
+Bước 3 : validate
+- Được gọi trước mỗi lần chuyển đến route mưới 
+- Kiểm tra phương thức phù hợp nhất để kiểm tra tham số và xác định điều hướng
+- Theo mặc định sẽ hiển thị trang 404 nếu trả về false hoặc trang 500 nếu Error
+Code : 
+validate({ params, query, store }) {
+  return true; // Tạo page component
+  return false; // Dừng render và hiển thị 404 cho zui
+  throw new Error('Lỗi rồi ông êi!'); // Cũng dừng render nhưng hiển thị 500
+}
+Bước 4 : asyncData() & fetch()
+a. Fetch()
+- fetch() dùng để lưu dữ liệu vào store trước khi hiển thị page 
+- Chỉ áp dụng cho 1 pages cụ thể 
+- Nếu trả về promise thì sẽ chờ đợi để thực hiện được 
+// pages/products/_id.vue
+export default {
+  fetch(({ store, params }) {
+    if (typeof (store.state.products.byId[params.id]) === 'undefined') {
+      return store.dispatch('products/loadProduct', { id: params.id });
+    };
+  },
+}
+b. AsynchData ()
+- Tương tự fetch()
+- Có thể không lưu dữ liệu vào store 
+export default {
+  asyncData({ params, error }) {
+    return axios.get(`https://api-cua-tui/posts/${params.id}`)
+      .then((res) => {
+        // Lưu res.data.title vào data { title } của page component
+        return { title: res.data.title };
+      })
+      .catch((e) => {
+        // Chuyển về trang 404
+        error({ statusCode: 404, message: 'Post not found' }); 
+      });
+  },
+}
+
+
+
